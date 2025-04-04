@@ -1041,7 +1041,7 @@ class System {
 
 
 class Body {
-    constructor(system, name, type, survey_level, keywords, tags, ruin_explored, core_techMiningMult) { // {{{
+    constructor(system, name, type, survey_level, keywords, tags, ruin_explored, core_techMiningMult, is_core_world, is_player_faction) { // {{{
         this.system = system;
         this.name = name;
         this.type = type;
@@ -1072,6 +1072,8 @@ class Body {
 			}
 		}
 		this.core_techMiningMult = core_techMiningMult;
+		this.is_core_world = is_core_world;
+		this.is_player_faction = is_player_faction;
     } // }}}
 
     set_conditions(keywords) { // {{{
@@ -1170,7 +1172,7 @@ class Body {
             'soil_nanites': (this.conditions.farming &&
                     !('rare_ore' in this.conditions) && !('volatiles' in this.conditions)),
             'mantle_bore': (this.type != 'gas_giant' && !this.keywords.includes('habitable')),
-            'plasma_dynamo': (this.type == 'gas_giant'), // TODO: || ice_giant
+            'plasma_dynamo': (this.type == 'gas_giant' || this.type == 'ice_giant'),
             'catalytic_core': (this.conditions.atmosphere == 0),
             'biofactory_embryo': this.keywords.includes('habitable'),
             'corrupted_nanoforge': true,
@@ -1637,18 +1639,26 @@ function parse_xml(contents) { // {{{
             const market_id = market_node.getAttribute('z');
             const loc = get_named_child(market_node, 'location').textContent.split('|').map(part => Number(part));
             const size = Number(get_named_child(market_node, 'size').textContent);
-            const faction = get_named_child(market_node, 'factionId')?.textContent;
-            const hidden = get_named_child(market_node, 'hidden');
-            // TODO: Remove && !hidden from this line?
-            if (faction != 'player' && !hidden && size > 0) {
-                // Source for -2 is https://fractalsoftworks.com/forum/index.php?topic=13672.msg230236#msg230236
-                faction_weights[faction] = (faction_weights[faction] ?? 0) + Math.max(1, size - 2);
+            var faction;
+            try {
+                faction = get_named_child(market_node, 'factionId').textContent;
+            } catch (e) {
+                console.log("Invalid market in save: " + market_id);
             }
-            if (faction != 'player' && size > 0) {
-                markets[market_id] = {
-                    'location': { 'x': loc[0], 'y': loc[1] },
-                    'size': size,
-                };
+
+            if (faction) {
+                const hidden = get_named_child(market_node, 'hidden');
+                // TODO: Remove && !hidden from this line?
+                if (faction != 'player' && !hidden && size > 0) {
+                    // Source for -2 is https://fractalsoftworks.com/forum/index.php?topic=13672.msg230236#msg230236
+                    faction_weights[faction] = (faction_weights[faction] ?? 0) + Math.max(1, size - 2);
+                }
+                if (faction != 'player' && size > 0) {
+                    markets[market_id] = {
+                        'location': { 'x': loc[0], 'y': loc[1] },
+                        'size': size,
+                    };
+                }
             }
         }
     });
@@ -1680,7 +1690,7 @@ function parse_xml(contents) { // {{{
 			const coord = get_coord(system_node).textContent.split('|');
 			const tags_element = get_named_child(system_node, 'tags');
 			const tags = [];
-			if(!!tags_element && !(typeof tags_element.children === 'undefined')){
+			if(!(typeof tags_element === 'undefined') && !(typeof tags_element.children === 'undefined')){
 				for (const st of tags_element.children) {
 					tags.push(st.textContent);
 				}
@@ -1743,9 +1753,17 @@ function parse_xml(contents) { // {{{
 				tags.push(st.textContent);
 			}
 			if ((typeof faction === 'undefined' || faction == 'player')) {
-				const body_obj = new Body(system, name, type, survey_level, conditions, tags, ruin_explored, core_techMiningMult);
+				var is_player_faction = false;
+				var is_core_world = false;
+				if(faction == 'player'){
+					is_player_faction = true;
+				}
+				if(system.tags.includes('theme_core_populated')){
+					is_core_world = true;
+				}
+				const body_obj = new Body(system, name, type, survey_level, conditions, tags, ruin_explored, core_techMiningMult, is_core_world, is_player_faction);
 				const body_id = body.getAttribute('z');
-				if (!tags.includes('star') && !system.tags.includes('theme_core_populated')) {
+				if (!tags.includes('star')) { // && !system.tags.includes('theme_core_populated')
 					bodies[body_id] = body_obj;
 					system.add_body(body_obj);
 				} else if (tags.includes('star')) {
@@ -2334,7 +2352,7 @@ function calculate_quality_bonuses(colony_set) { // {{{
     }
 } // }}}
 
-function evaluate_planet_sets(colonies, max_distance, max_distance_tocore, spoiler_level) { // {{{
+function evaluate_planet_sets(colonies, max_distance, max_distance_tocore, check_core_world, check_player_faction, spoiler_level) { // {{{
     const player_governed_count = colonies.filter(c => c.market.player_governed).length;
     const management = (2 - player_governed_count) * 2;
     var least_profit = Number.MIN_SAFE_INTEGER;
@@ -2352,7 +2370,7 @@ function evaluate_planet_sets(colonies, max_distance, max_distance_tocore, spoil
         const candidates = [];
         for (const body_id in bodies) {
             const body = bodies[body_id];
-            if (spoiler_level == 0 && body.survey_level < 3 || body.system.r > max_distance_tocore) {
+            if (spoiler_level == 0 && body.survey_level < 3 || body.system.r > max_distance_tocore || check_core_world==0 && body.is_core_world || check_player_faction==0 && body.is_player_faction) {
                 continue;
             }
             body.evaluate_artifacts();

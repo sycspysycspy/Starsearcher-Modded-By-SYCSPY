@@ -1503,7 +1503,25 @@
 						<option value="200">within 200 ly.</option>
                     </select>
                 </label>
-            </p>		
+            </p>
+			<p>
+                <label>
+                    Check Core World Planets: 
+                    <select name="check_core_world">
+                        <option value="0">No.</option>
+                        <option value="1">Yes.</option>
+                    </select>
+                </label>
+            </p>
+			<p>
+                <label>
+                    Show Player Colonised Planets: 
+                    <select name="check_player_faction">
+                        <option value="1">Yes.</option>
+                        <option value="0">No.</option>
+                    </select>
+                </label>
+            </p>			
             <p>
                 <label>
                     Spoiler policy:
@@ -1942,6 +1960,8 @@
 									<td class="tm_mult">TM-Mult</td>
 									<td class="gate">Gate</td>
 									<td class="relay">Domain Relay</td>
+									<td class="is_core_world">Core World</td>
+									<td class="is_player_faction">Colonised</td>
                                 </tr>
                             </thead>
                             <tfoot>
@@ -1971,6 +1991,8 @@
 						<td class="tm_mult numeric"></td>
 						<td class="gate"></td>
 						<td class="relay"></td>
+						<td class="is_core_world"></td>
+						<td class="is_player_faction"></td>
                     </tr>
                     <tr class="overall">
                         <td colspan="10"></td>

@@ -520,6 +520,8 @@ function build_planet_sets(planet_sets, interrupted) { // {{{
 			}
 			tds[16].textContent = (planets[i].gate) ? '\u2713' : '\u274C';
 			tds[17].textContent = (planets[i].domain_relay) ? '\u2713': '\u274C';
+			tds[18].textContent = (planets[i].is_core_world) ? '\u2713': '\u274C';
+			tds[19].textContent = (planets[i].is_player_faction) ? '\u2713': '\u274C';
             table_body.appendChild(row_clone);
             set_income += stats[i].income.value();
             set_upkeep += stats[i].upkeep.value();
@@ -746,8 +748,10 @@ function search_planets(evt) { // {{{
             });
             const max_distance = Number(document.querySelector('select[name="max_distance"]').value) * UNITS_PER_LIGHTYEAR;
 			const max_distance_tocore = Number(document.querySelector('select[name="max_distance_tocore"]').value) * UNITS_PER_LIGHTYEAR;
+			const check_core_world = Number(document.querySelector('select[name="check_core_world"]').value);
+			const check_player_faction = Number(document.querySelector('select[name="check_player_faction"]').value);
             const spoiler_level = Number(document.querySelector('select[name="spoiler_level"]').value);
-            const [planet_sets, interrupted] = evaluate_planet_sets(colonies, max_distance, max_distance_tocore, spoiler_level);
+            const [planet_sets, interrupted] = evaluate_planet_sets(colonies, max_distance, max_distance_tocore, check_core_world, check_player_faction, spoiler_level);
             build_planet_sets(planet_sets, interrupted);
             document.getElementById('modal').dataset.open = 'planet_sets';
             fit_dialog(document.getElementById('planet_sets_dialog'));
