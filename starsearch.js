@@ -2038,13 +2038,13 @@ function get_colony_criteria(section) { // {{{
     }
     let requested_ruins_score = undefined;
     if (section.querySelector('input.ruins_scattered').checked) {
-        requested_ruins_score = -1
-    } else if (section.querySelector('input.ruins_widespread').checked) {
-        requested_ruins_score = 0
-    } else if (section.querySelector('input.ruins_extensive').checked) {
         requested_ruins_score = 1
-    } else if (section.querySelector('input.ruins_vast').checked) {
+    } else if (section.querySelector('input.ruins_widespread').checked) {
         requested_ruins_score = 2
+    } else if (section.querySelector('input.ruins_extensive').checked) {
+        requested_ruins_score = 3
+    } else if (section.querySelector('input.ruins_vast').checked) {
+        requested_ruins_score = 4
     }
     const criteria = {
         requested_ore_score,
